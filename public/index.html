@@ -491,17 +491,60 @@
 
         @media (max-width: 768px) {
             nav ul {
-                gap: 1.5rem;
+                display: none;
+            }
+
+            nav {
+                padding: 0 1.25rem;
+            }
+
+            .cta-header {
                 font-size: 13px;
+                padding: 10px 16px;
+            }
+
+            .hero {
+                padding: 60px 1.25rem;
             }
 
             .hero h1 {
-                font-size: 36px;
+                font-size: 32px;
+                letter-spacing: -0.5px;
+            }
+
+            .hero p {
+                font-size: 16px;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 280px;
+                text-align: center;
+            }
+
+            .about,
+            .gallery,
+            .reviews {
+                padding: 60px 1.25rem;
+            }
+
+            .section-header h2 {
+                font-size: 32px;
             }
 
             .about-grid,
             .map-grid {
                 grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .about-image {
+                aspect-ratio: 4 / 3;
             }
 
             .reviews-grid {
@@ -512,8 +555,29 @@
                 grid-template-columns: 1fr;
             }
 
+            .carousel-item img {
+                object-fit: cover;
+            }
+
+            .map-section {
+                padding: 60px 1.25rem;
+            }
+
+            .map-info {
+                padding-right: 0;
+            }
+
+            .map-embed iframe {
+                height: 280px;
+            }
+
             .footer-grid {
                 grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            footer {
+                padding: 2rem 1.25rem 1.5rem;
             }
         }
     </style>
