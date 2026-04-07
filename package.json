@@ -1,0 +1,13 @@
+{
+  "name": "aplusclean",
+  "version": "1.0.0",
+  "description": "A+ Cleaning Services - Professional Home Cleaning in Metro Vancouver",
+  "scripts": {
+    "dev": "npx http-server",
+    "build": "echo 'Static site - no build needed'",
+    "start": "npx http-server"
+  },
+  "keywords": ["cleaning", "vancouver"],
+  "author": "Ronik Khanna",
+  "license": "MIT"
+}
