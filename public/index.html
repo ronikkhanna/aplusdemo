@@ -230,18 +230,23 @@
 
         .about-image {
             background: #f5f5f5;
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             border: 1px solid #e5e5e5;
             overflow: hidden;
+            height: 480px;
+            cursor: pointer;
         }
 
         .about-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+
+        .about-image:hover img {
+            transform: scale(1.02);
         }
 
         .gallery {
@@ -261,26 +266,30 @@
         .gallery-strip-outer {
             flex: 1;
             overflow: hidden;
+            min-width: 0;
         }
 
         .gallery-strip {
             display: flex;
+            flex-wrap: nowrap;
             gap: 1rem;
             transition: transform 0.4s ease;
         }
 
         .gallery-tile {
-            flex: 0 0 calc(33.333% - 0.667rem);
-            height: 320px;
+            flex: 0 0 auto;
+            height: 340px;
             overflow: hidden;
             border: 1px solid #e5e5e5;
             background: #f5f5f5;
+            cursor: pointer;
         }
 
         .gallery-tile img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center top;
             display: block;
             transition: transform 0.4s ease;
         }
@@ -304,6 +313,51 @@
         .strip-btn:hover {
             background: #2c2c2c;
             color: white;
+        }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-out;
+        }
+
+        .lightbox.open {
+            display: flex;
+        }
+
+        .lightbox img {
+            max-width: 92vw;
+            max-height: 92vh;
+            object-fit: contain;
+            display: block;
+            cursor: default;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .lightbox-close:hover {
+            background: rgba(255,255,255,0.15);
         }
 
         /* Contact modal */
@@ -602,7 +656,7 @@
             }
 
             .about-image {
-                aspect-ratio: 4 / 3;
+                height: 280px;
             }
 
             .reviews-grid {
@@ -611,11 +665,6 @@
 
             .services {
                 grid-template-columns: 1fr;
-            }
-
-            .gallery-tile {
-                flex: 0 0 calc(100% - 0px);
-                height: 260px;
             }
 
             .gallery-strip-wrap {
@@ -707,7 +756,7 @@
                 </div>
             </div>
 
-            <div class="about-image">
+            <div class="about-image" onclick="openLightbox('/images/before-1.png')">
                 <img src="/images/before-1.png" alt="A+ Cleaning before and after">
             </div>
         </div>
@@ -723,19 +772,19 @@
             <button class="strip-btn strip-btn-left" onclick="shiftStrip(-1)">←</button>
             <div class="gallery-strip-outer" id="galleryOuter">
                 <div class="gallery-strip" id="galleryStrip">
-                    <div class="gallery-tile">
+                    <div class="gallery-tile" onclick="openLightbox('/images/before-2.png')">
                         <img src="/images/before-2.png" alt="Job 1">
                     </div>
-                    <div class="gallery-tile">
+                    <div class="gallery-tile" onclick="openLightbox('/images/before-3.png')">
                         <img src="/images/before-3.png" alt="Job 2">
                     </div>
-                    <div class="gallery-tile">
+                    <div class="gallery-tile" onclick="openLightbox('/images/after-1.png')">
                         <img src="/images/after-1.png" alt="Job 3">
                     </div>
-                    <div class="gallery-tile">
+                    <div class="gallery-tile" onclick="openLightbox('/images/after-2.png')">
                         <img src="/images/after-2.png" alt="Job 4">
                     </div>
-                    <div class="gallery-tile">
+                    <div class="gallery-tile" onclick="openLightbox('/images/after-3.png')">
                         <img src="/images/after-3.png" alt="Job 5">
                     </div>
                 </div>
@@ -834,6 +883,12 @@
         </div>
     </section>
 
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+        <img id="lightboxImg" src="" alt="" onclick="event.stopPropagation()">
+    </div>
+
     <!-- Contact Modal -->
     <div class="modal-overlay" id="contactModal" onclick="handleOverlayClick(event)">
         <div class="modal">
@@ -885,31 +940,59 @@
     </footer>
 
     <script>
-        // Gallery strip
         let stripIndex = 0;
         const totalTiles = 5;
+        const GAP = 16;
 
-        function shiftStrip(direction) {
-            const strip = document.getElementById('galleryStrip');
-            const outer = document.getElementById('galleryOuter');
-            const tileWidth = outer.querySelector('.gallery-tile').offsetWidth + 16;
-            const visibleCount = Math.round(outer.offsetWidth / tileWidth);
-            const maxIndex = totalTiles - visibleCount;
-
-            stripIndex += direction;
-            if (stripIndex < 0) stripIndex = 0;
-            if (stripIndex > maxIndex) stripIndex = maxIndex;
-
-            strip.style.transform = `translateX(-${stripIndex * tileWidth}px)`;
+        function getVisibleCount() {
+            return window.innerWidth < 768 ? 1 : 3;
         }
 
-        // Modal
+        function getTileWidth() {
+            const outer = document.getElementById('galleryOuter');
+            const visible = getVisibleCount();
+            return (outer.offsetWidth - GAP * (visible - 1)) / visible;
+        }
+
+        function initStrip() {
+            const tiles = document.querySelectorAll('.gallery-tile');
+            const w = getTileWidth();
+            tiles.forEach(t => t.style.width = w + 'px');
+            stripIndex = 0;
+            document.getElementById('galleryStrip').style.transform = 'translateX(0)';
+        }
+
+        function shiftStrip(direction) {
+            const maxIndex = totalTiles - getVisibleCount();
+            stripIndex = Math.max(0, Math.min(stripIndex + direction, maxIndex));
+            const offset = stripIndex * (getTileWidth() + GAP);
+            document.getElementById('galleryStrip').style.transform = `translateX(-${offset}px)`;
+        }
+
+        window.addEventListener('resize', initStrip);
+        window.addEventListener('load', initStrip);
+
+        // Lightbox
+        function openLightbox(src) {
+            document.getElementById('lightboxImg').src = src;
+            document.getElementById('lightbox').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // Contact modal
         function openModal() {
             document.getElementById('contactModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
         }
 
         function closeModal() {
             document.getElementById('contactModal').classList.remove('open');
+            document.body.style.overflow = '';
         }
 
         function handleOverlayClick(e) {
@@ -917,12 +1000,12 @@
         }
 
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeModal();
+            if (e.key === 'Escape') { closeLightbox(); closeModal(); }
         });
 
         // Smooth scroll
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+            anchor.addEventListener('click', function(e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) target.scrollIntoView({ behavior: 'smooth' });
